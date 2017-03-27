@@ -36,10 +36,13 @@ setup(
     license='MIT',
     packages=['aiohttp_prodtools'],
     zip_safe=True,
-    # entry_points="""
-    #     [console_scripts]
-    #     aprod=aiohttp_prodtools.cli:cli
-    #     aiohttp-prodtools=aiohttp_prodtools.cli:cli
-    # """,
-    install_requires=['aiohttp>=2.0.0'],
+    entry_points="""
+        [console_scripts]
+        aprod=aiohttp_prodtools.cli:cli
+        aiohttp-prodtools=aiohttp_prodtools.cli:cli
+    """,
+    install_requires=[
+        'aiohttp>=2.0.0',
+        'click>=6.7',
+    ],
 )

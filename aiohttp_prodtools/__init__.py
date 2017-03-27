@@ -1,2 +1,2 @@
-from .settings import Settings  # noqa
-from .urls import dsn  # noqa
+from .settings import BaseSettings  # noqa
+from .urls import make_dsn  # noqa

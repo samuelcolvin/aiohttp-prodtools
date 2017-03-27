@@ -1,36 +1,36 @@
 import re
 
-from .settings import Settings
+from .settings import BaseSettings
 
 
 def _rfc_1738_quote(text):
     return re.sub(r'[:@/]', lambda m: '%{:X}'.format(ord(m.group(0))), text)
 
 
-def dsn(settings: Settings=None,
-        drivername: str=None,
-        username: str=None,
+def make_settings_dsn(settings: BaseSettings, prefix='DB'):
+    kwargs = {
+        f: settings.dict['{}_{}'.format(prefix, f.upper())]
+        for f in ('name', 'password', 'host', 'port', 'user', 'driver')
+    }
+    return make_dsn(**kwargs)
+
+
+def make_dsn(
+        driver: str=None,
+        user: str=None,
         password: str=None,
         host: str=None,
         port: str=None,
-        database: str=None,
+        name: str=None,
         query: str=None):
     """
     Create a DSN from from connection settings.
     
     Stolen approximately from sqlalchemy/engine/url.py:URL.
     """
-    if settings is not None:
-        database = settings.DB_NAME
-        password = settings.DB_PASSWORD
-        host = settings.DB_HOST
-        port = settings.DB_PORT
-        username = settings.DB_USER
-        drivername = settings.DB_DRIVER
-
-    s = drivername + '://'
-    if username is not None:
-        s += _rfc_1738_quote(username)
+    s = driver + '://'
+    if user is not None:
+        s += _rfc_1738_quote(user)
         if password is not None:
             s += ':' + _rfc_1738_quote(password)
         s += '@'
@@ -41,8 +41,8 @@ def dsn(settings: Settings=None,
             s += host
     if port is not None:
         s += ':{}'.format(int(port))
-    if database is not None:
-        s += '/' + database
+    if name is not None:
+        s += '/' + name
     query = query or {}
     if query:
         keys = list(query)

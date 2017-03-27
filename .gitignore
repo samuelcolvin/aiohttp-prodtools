@@ -1,3 +1,4 @@
 .idea/
 env/
 *.py[cod]
+aiohttp_prodtools.egg-info/
