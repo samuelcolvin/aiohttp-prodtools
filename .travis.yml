@@ -1,0 +1,27 @@
+language: python
+
+cache: pip
+
+services:
+- postgresql
+
+python:
+- '3.5'
+- '3.6'
+- 'nightly'  # currently 3.7
+
+matrix:
+  allow_failures:
+  - python: 'nightly'
+
+install:
+- make install
+
+script:
+- make lint
+- make test
+- ./tests/check_tag.py
+
+after_success:
+- ls -lha
+- bash <(curl -s https://codecov.io/bash)
