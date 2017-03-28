@@ -34,6 +34,10 @@ async def error_middleware(app, handler):
         except HTTPException as e:
             await log_warning(request, e)
             raise
+        except CancelledError as e:
+            if app.get('log_cancelled_error'):
+                ...  # TODO
+            raise
         except BaseException as e:
             request.app['error_logger'].exception('%s: %s', e.__class__.__name__, e, extra={
                 'fingerprint': [e.__class__.__name__, str(e)],
@@ -51,7 +55,6 @@ class ConnectionManager:
     """
     Copies engine.acquire()'s context manager but is lazy in that you need to call get_connection()
     for a connection to be found, otherwise does nothing.
-    
     """
     # TODO non lazy version
     # TODO transactions
