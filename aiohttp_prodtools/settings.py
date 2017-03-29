@@ -2,11 +2,22 @@ import json
 import os
 from importlib import import_module
 from pathlib import Path
+from typing import Any, Type
 
 
-class Required:
-    def __init__(self, v_type=None):
-        self.v_type = v_type
+class Setting:
+    def __init__(self, default: Any=None, *, v_type: Type=None, required: bool=False, env: str=None):
+        if default and v_type:
+            raise RuntimeError('"default" and "v_type" cannot both be defined.')
+        elif default and required:
+            raise RuntimeError('It doesn\'t make sense to have "default" set and required=True.')
+        if default:
+            self.default = default
+            self.v_type = type(default)
+        else:
+            self.v_type = v_type
+        self.required = required
+        self.env_var_name = env
 
 
 class BaseSettings:
@@ -21,7 +32,7 @@ class BaseSettings:
     Or, passing the custom setting as a keyword argument when initialising settings (useful when testing)
     """
     _ENV_PREFIX = 'APP_'
-    Required = Required
+    Setting = Setting
 
     DB_DATABASE = None
     DB_USER = None
@@ -59,15 +70,20 @@ class BaseSettings:
                 continue
 
             orig_value = getattr(self, attr_name)
-            is_required = isinstance(orig_value, Required)
-            if is_required:
-                orig_type = orig_value.v_type
-            else:
-                orig_type = type(orig_value)
 
-            env_var_name = self._ENV_PREFIX + attr_name
+            if isinstance(orig_value, Setting):
+                is_required = orig_value.required
+                default = orig_value.default
+                orig_type = orig_value.v_type
+                env_var_name = orig_value.env_var_name
+            else:
+                default = orig_value
+                is_required = False
+                orig_type = type(orig_value)
+                env_var_name = self._ENV_PREFIX + attr_name
+
             env_var = os.getenv(env_var_name, None)
-            d[attr_name] = orig_value
+            d[attr_name] = default
 
             if env_var is not None:
                 if issubclass(orig_type, bool):
@@ -86,8 +102,7 @@ class BaseSettings:
                 d[attr_name] = env_var
             elif is_required and attr_name not in custom_settings:
                 raise RuntimeError('The required environment variable "{0}" is currently not set, '
-                                   'you\'ll need to run `source activate.settings.sh` '
-                                   'or you can set that single environment variable with '
+                                   'you\'ll need to set the environment variable with '
                                    '`export {0}="<value>"`'.format(env_var_name))
         return d
 
